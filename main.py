@@ -4,7 +4,7 @@ import string
 
 
 
-random.seed("YouAreNotAlone...")
+random.seed("YouAreNotAloneWhenAtWork...")
 
 a=genetics.Gen(string.digits,6)
 b=genetics.Gen(string.digits,6)
