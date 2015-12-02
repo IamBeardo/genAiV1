@@ -14,14 +14,17 @@ class Gen:
         #print "self.body {} {}".format(cmpString,len(cmpString))
 
         tmp = 0
+        print("target ",target,"Self ", cmpString,"Raw Fitness ")
         for i in range(len(cmpString)):
             tmp2 = ord(target[i]) - ord(cmpString[i])
+            tmp3=tmp2
+
             tmp2 *= tmp2  # ^2 to increase fitness in bigger diff and convert to unsigned
             tmp += tmp2
-            print tmp, tmp2
+            print tmp, tmp2, tmp3
             #tFittnes+= ord(x)-ord(y)
         self.fitness=tmp
-        print(target, cmpString,self.fitness)
+
         return cmpString
 
     def __init__(self, genformat=string.digits, genlen=10):
@@ -38,6 +41,13 @@ class Gen:
         Gen.mycount -= 1
         #print Gen.mycount
 
+    def __lt__(self,other):
+        print "Sort this "
+        print " Got"
+
+        return lambda self, other: int(self.fitness) < int(other.fitness)
+
+        #return lambda self, other: int(self.fitness) < int(other.fitness)
 
 
 
@@ -60,12 +70,21 @@ class Population:
 
 
     def __repr__(self):
-        return "".join("[" + str(i) + "] " for i in self.individuals)
+        return "".join("[" + str(i) + ":"+str(i.fitness) +"] " for i in self.individuals)
 
     def calcFitness(self,target=""):
-        for i in self.individuals.__getslice__(2,3):
+        for i in self.individuals:
             i.calcFitness(target)
             print i.fitness
+
+    def sort(self,byWhat="fitness"):
+        if byWhat=="fitness":
+            self.individuals.sort()
+
+    def __lt__(self, other):
+        print "lt called"
+        return 1==1
+
 
 
 
