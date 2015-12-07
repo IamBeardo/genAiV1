@@ -11,17 +11,27 @@ random.seed("YouAreNotAloneWhenAtWork...")
 
 
 world = genetics.Population(10)
-print world
+print "World INIT", world
 
 world.calcFitness("012345")
-#world.sort("fitness")
-print world
+world.sort("fitness")
 
-world.generateNewGeneration( )
-#print world
+print "World Sort",world
 
-daaa = debug._debugPrinter()
-daaa.off(False)
-daaa.p("asdfasdfasdf")
+world.generateNewGeneration(fromCopy=False )
+print "World Next Gen",world.nextGeneration
+
+world.setPopulationToNext()
+world.calcFitness("012345")
+world.sort("fitness")
+print "World Sort",world
+world.generateNewGeneration(fromCopy=False )
+
+world.setPopulationToNext()
+world.calcFitness("012345")
+world.sort("fitness")
+print "World Sort",world
+#world.generateNewGeneration(fromCopy=False )
+print world.myHist(world.individuals[0])
 
 
