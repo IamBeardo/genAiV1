@@ -6,19 +6,29 @@ import debug
 
 
 
-random.seed("YouAreNotAloneWhenAtWork...")
+#random.seed("YouAreNotAloneWhenAtWork...")
 
 
 
-world = genetics.Population(10)
-print "World INIT", world
-
-world.calcFitness("012345")
+world = genetics.Population(100)
+#print "World INIT", world
+world.calcFitness("0123456789")
 world.sort("fitness")
+print "world after sort", world
 
-print "World Sort",world
+for i in range(100):
+    world.generateNewGeneration(fromCopy=False )
+    print world.fitness()
+    world.mutate(world.nextGeneration,0.20)
+    world.setPopulationToNext()
+    world.calcFitness("0123456789")
+    world.sort("fitness")
+    print world.fitness()
+    if world.min==0:
+        print "Ending, target reached"
+        print world
+        break
 
-world.generateNewGeneration(fromCopy=False )
-print "World Next Gen",world.nextGeneration
 
-world.get_History()
+
+#print world.getAnsastors(world.individuals[0])
