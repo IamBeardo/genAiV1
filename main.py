@@ -21,17 +21,4 @@ print "World Sort",world
 world.generateNewGeneration(fromCopy=False )
 print "World Next Gen",world.nextGeneration
 
-world.setPopulationToNext()
-world.calcFitness("012345")
-world.sort("fitness")
-print "World Sort",world
-world.generateNewGeneration(fromCopy=False )
-
-world.setPopulationToNext()
-world.calcFitness("012345")
-world.sort("fitness")
-print "World Sort",world
-#world.generateNewGeneration(fromCopy=False )
-print world.myHist(world.individuals[0])
-
-
+world.get_History()

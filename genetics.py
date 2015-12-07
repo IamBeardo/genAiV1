@@ -138,38 +138,12 @@ class Population:
                 #print i, self.nextGeneration
                 self.nextGeneration.append(c)
 
-    def printHistory(self,Me=None,level=0,HistoryOfMe=""):
-        level =+1
-        if level > 10: return
-        if Me == None: return "[END]"
+    def get_History(a123):
 
-        print "Level:", level
-        print "Me:", Me
-        print "From P1:", Me.P1, "P2:", Me.P2
-        try:
-            HistoryOfMe =HistoryOfMe + "[P1:" + self.printHistory(Me=Me.P1,level=level) +"]"
-            HistoryOfMe =HistoryOfMe + "[P2:" + self.printHistory(Me=Me.P2,level=level) +"]"
-        except:
-            return Me
+        print "PPPP"
+        print a123
 
-
-        return  HistoryOfMe
-
-    def myHist(self,_Obj, MyHistory=""):
-
-        tHistory = MyHistory
-        t = str(_Obj)
-        print t
-        tHistory.join( tHistory + "[ i am " + str(_Obj))
-        if not hasattr(_Obj,"P1"):
-            tHistory = MyHistory + "[ No P1 ]"
-        else:
-            MyHistory = MyHistory + " [ " + str(self.myHist(self,_Obj.P1))
-
-        return MyHistory + " ]"
-
-
-
+        print "qqqq"
 
     def genChildren(self, _parents,_crosspoint=-1,_siblings=True):
         p1,p2 = _parents[0], _parents[1]
