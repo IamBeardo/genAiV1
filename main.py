@@ -33,6 +33,7 @@ for count in range(100):
     world.sort("fitness")
     for i in range(100):
         world.generateNewGeneration(fromCopy=False )
+        print "aaaaaaaaa"
         world.mutate(world.nextGeneration,0.33)
         world.setPopulationToNext()
         world.calcFitness("0123456789")

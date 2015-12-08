@@ -14,6 +14,7 @@ class Gen:
         if target == "": target="0123456789"
 
         tmp = 0
+        print self.body, target
         for i in range(len(cmpString)):
             tmp2 = ord(target[i]) - ord(cmpString[i])   # diff between chars
             tmp3=tmp2                                   # save orig diff for debug
@@ -214,7 +215,21 @@ class Population:
                     #print "sizeNow",len(self.nextGeneration)
         exit
         #                           #No , actionOnSource
+        _elites                 =   [10  , 'keep']           # 'keep'/'remove'
+        _tournamentBreading     = 4
+        _directMutation         = 0
 
+        print "AAAA"
+        #self.nextGeneration=[]
+        #self.nextGeneration =self.getElites(oldGeneration,_elites)
+        #print "Next Generation after Elits",self.nextGeneration
+        #print "Popsize: ", popsize
+
+        #for i in range(len(self.nextGeneration),popsize,2):
+         #   newChildren=(self.genChildren(self.getMates(oldGeneration),_crosspoint=3))
+          #  for c in newChildren:
+           #     #print i, self.nextGeneration
+            #    self.nextGeneration.append(c)
 
 
 
