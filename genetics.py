@@ -6,7 +6,6 @@ import random
 # Class Gen:
 #
 #########################################################################################################
-
 class Gen:
     mycount = 0
 
@@ -15,8 +14,6 @@ class Gen:
         if target == "": target="0123456789"
 
         tmp = 0
-        #print("target ",target,"Self ", cmpString,"Raw Fitness ")
-        #print "LEN", len(cmpString)
         for i in range(len(cmpString)):
             tmp2 = ord(target[i]) - ord(cmpString[i])   # diff between chars
             tmp3=tmp2                                   # save orig diff for debug
@@ -24,17 +21,10 @@ class Gen:
             tmp += tmp2                                 # update over-all diff for string. High is bigger diff.
             #print i,tmp, tmp2, tmp3
         self.fitness=tmp
-
         return cmpString
 
-
-
-
-
-
-
     def __init__(self, genformat=string.digits, genlen=10, setValue=""):
-
+        self.meMutated = -1
         self.fitness = 0
         self.genformat = genformat
         self.genlen = genlen
@@ -52,12 +42,9 @@ class Gen:
     def __del__(self):
         Gen.mycount -= 1
         return None
-
-
     #########################################################################################################
-    #
+    # Class Gen:
     # Set sorting and compare functions.
-    #
     #########################################################################################################
     def __lt__(self,other):
         #print " Got self {} and {} :< {} ".format(self.fitness,other.fitness,self.fitness<other.fitness)
@@ -71,6 +58,7 @@ class Gen:
 
     def __setslice__(self, i, j, sequence):
         print "APA!!!!"
+
 #########################################################################################################
 #
 # Class Individual:
@@ -85,6 +73,9 @@ class Individual:
     def __del__(self):
         Individual.mycount -= 1
 
+
+
+
 #########################################################################################################
 #
 # Class Population:
@@ -93,8 +84,10 @@ class Individual:
 class Population:
     def __init__(self, nrofindividuals):
         self.generation=0
+        self.solved=False
         self.nrOfIndividuals = nrofindividuals
         self.nextGeneration = []
+        self.individuals = []
         self.individuals = [Gen() for i in xrange(nrofindividuals)]
         print "setting up initial population..."
 
@@ -122,24 +115,37 @@ class Population:
         return tStartHistory+tRet
 
     def fitness(self):
+        return  "Generation:{} Min: {} Max: {} Best Ind: {}, P1: {} P2 {}, Mutation: {}".format(self.generation,self.min,self.max,self.bestIndividual,self.bestIndividual.P1, self.bestIndividual.P2, self.bestIndividual.meMutated)
 
-        return "Generation:",self.generation,"Min",self.min,"Max",self.max
-
+    #########################################################################################################
+    #
+    # Function CalcFitness:
+    #       Calc fitness for each member of individuals, and overall statistics for the current population
+    #               target: if set, will update class var for fitness, that will be used in coming CalcFitness calls
+    #
+    #########################################################################################################
 
     def calcFitness(self,target=""):
+        if target <> "":
+            self.target=target
+
         self.min=-1
         self.max=-1
+        self.bestIndividual=None
 
         for i in self.individuals:
-            i.calcFitness(target)
+            i.calcFitness(self.target)
             tF=i.fitness
             if self.min==-1:
                 self.min,self.max=tF,tF
-            if tF< self.min: self.min=tF
+                self.bestIndividual=i
+            if tF< self.min:
+                self.min=tF
+                self.bestIndividual=i
             if tF> self.max: self.max=tF
 
-
-
+        if self.bestIndividual.fitness == 0:
+            self.solved=True
 
     def sort(self,byWhat="fitness"):
         if byWhat=="fitness":
@@ -154,47 +160,79 @@ class Population:
                 tPos = random.randint(0,len(indi.body)-1)
                 tRan = random.choice(string.digits)
                 indi.body = indi.body[:tPos] + tRan + indi.body[tPos+1:]
+                indi.meMutated=tPos
                 #print "len::", len(indi.body), "["+indi.body+"]"
                 #print "tpos",tPos
 
                 #indi.body[random.randint(0,len(indi.body))]=str(random.choice(string.digits))
 
-    def generateNewGeneration(self, _oldGeneration=None, popsize=-1, fromCopy=True):
-        #print _oldGeneration, popsize, fromCopy
 
+
+    def defineEvolution(self,evolutionMatrix):
+        self.evolutionMatrix = evolutionMatrix
+
+    #########################################################################################################
+    # Class Population:
+    # GenerateNewGeneration:
+    #       _oldGeneration: from what collection of individuals to form the new population
+    #       fromCopy:       make a copy of original population before starting some functions could modify
+    #                       original population.
+    #########################################################################################################
+
+    def generateNewGeneration(self, _oldGeneration=None, popsize=-1, fromCopy=True, tSettings=""):
         if not _oldGeneration: _oldGeneration=self.individuals
         if fromCopy:    oldGeneration = _oldGeneration.__getslice__(0, len(_oldGeneration))
         else:           oldGeneration=_oldGeneration
 
         if popsize == -1: popsize=len(oldGeneration)
-        #print _oldGeneration, popsize, fromCopy
         oldGeneration.sort(reverse=True)
-        #print _oldGeneration, popsize, fromCopy
+        for cmdList in self.evolutionMatrix:
+            #print cmdList
+            if cmdList[0] == "ClearNextGen":
+                self.nextGeneration=[]
+            elif cmdList[0] == "GetElits":
+                #print len(oldGeneration)*cmdList[1]
+                self.nextGeneration = self.getElites(oldGeneration,[int(len(oldGeneration)*cmdList[1]),cmdList[2]])
+                #print self.nextGeneration
+                #print "sizeNow",len(self.nextGeneration)
+            elif cmdList[0] == "GenChildren":
+                _numberOfItems = int(len(oldGeneration)*cmdList[1]/2)
+                #print _numberOfItems
+                _crosspoint = cmdList[2]
+                _kids = cmdList[3]
+                _function = cmdList[4]
+                _selectRange = int(len(oldGeneration)*cmdList[5])
+                _compareNumber = cmdList[6]
+                _returnNumber = cmdList[7]
 
-
+                if _function == "GetMates":
+                    for i in range(0,_numberOfItems):
+                        newChildren=self.genChildren(self.getMates(oldGeneration),_crosspoint=_crosspoint)
+                        for c in newChildren:
+                            self.nextGeneration.append(c)
+                    #print self.nextGeneration
+                    #print "sizeNow",len(self.nextGeneration)
+        exit
         #                           #No , actionOnSource
-        _elites                 =   [10  , 'keep']           # 'keep'/'remove'
-        _tournamentBreading     = 4
-        _directMutation         = 0
 
-
-        self.nextGeneration=[]
-        self.nextGeneration =self.getElites(oldGeneration,_elites)
-       # print "Next Generation after Elits",self.nextGeneration
-        #print "Popsize: ", popsize
-
-        for i in range(len(self.nextGeneration),popsize,2):
-            newChildren=(self.genChildren(self.getMates(oldGeneration),_crosspoint=3))
-            for c in newChildren:
-                #print i, self.nextGeneration
-                self.nextGeneration.append(c)
 
 
 
     def genChildren(self, _parents,_crosspoint=-1,_siblings=True):
         p1,p2 = _parents[0], _parents[1]
+
+
+        #random crosspoint
         if _crosspoint == -1:
-            _crosspoint = random.randint(0,len(p1))
+            _crosspoint = random.randint(0,len(p1.body))
+        # waited crosspoint
+        if _crosspoint == -2:                           #waited crossover
+            _totalscore = p1.fitness + p2.fitness       # as in: p1.fitness = 30 p2.fitness = 70, totalscore = 100
+            p1w = (float(p1.fitness) /_totalscore)      # p1w = 30/100 = 0,3
+            _crosspoint = int(len(p1.body)*(1-p1w))     # and reverted so 70% is taken from p1 due to more (less if better) "fitness"
+
+            #print p1.fitness, p2.fitness, _totalscore, p1w, _crosspoint
+
 
         c1= Gen( genlen=p1.genlen )
         c2= Gen( genlen=p1.genlen )

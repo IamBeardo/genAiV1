@@ -1,34 +1,49 @@
 import genetics
 import random
 
-import debug
-
-
-
-
 #random.seed("YouAreNotAloneWhenAtWork...")
 
+tSettings =     [
+                    ["ClearNextGen",],
+                    ["GetElits", 0.90, "keep"],
+                    ["GenChildren",             # GenChildren
+                        0.9,                      # 1 = rest of list
+                        -2,                     # -1 crosspoint random
+                        2,                      # kids to create
+                        "GetMates",             # TournamentGet
+                            0.9,                 # select from top 90%
+                            3,                  # select 3
+                            1                   # return 1 of the selected
+                    ]
+                ]
 
-
+a="""
 world = genetics.Population(100)
-#print "World INIT", world
+world.defineEvolution(tSettings)
 world.calcFitness("0123456789")
 world.sort("fitness")
-print "world after sort", world
+print "world after sort", world"""
 
-for i in range(100):
-    world.generateNewGeneration(fromCopy=False )
-    print world.fitness()
-    world.mutate(world.nextGeneration,0.20)
-    world.setPopulationToNext()
+_totalGeneration=0
+_count=0
+for count in range(100):
+    world = genetics.Population(100)
+    world.defineEvolution(tSettings)
     world.calcFitness("0123456789")
     world.sort("fitness")
+    for i in range(100):
+        world.generateNewGeneration(fromCopy=False )
+        world.mutate(world.nextGeneration,0.33)
+        world.setPopulationToNext()
+        world.calcFitness("0123456789")
+        world.sort("fitness")
+        #print world.fitness()
+        if world.solved:
+            break
+
+    _count = _count +1
+    _totalGeneration = _totalGeneration + world.generation
     print world.fitness()
-    if world.min==0:
-        print "Ending, target reached"
-        print world
-        break
+    print "avrgeneration {}".format(_totalGeneration/_count)
 
 
-
-#print world.getAnsastors(world.individuals[0])
