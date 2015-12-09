@@ -14,7 +14,6 @@ class Gen:
         if target == "": target="0123456789"
 
         tmp = 0
-        print self.body, target
         for i in range(len(cmpString)):
             tmp2 = ord(target[i]) - ord(cmpString[i])   # diff between chars
             tmp3=tmp2                                   # save orig diff for debug
@@ -57,9 +56,6 @@ class Gen:
         except:
             return False
 
-    def __setslice__(self, i, j, sequence):
-        print "APA!!!!"
-
 #########################################################################################################
 #
 # Class Individual:
@@ -74,24 +70,36 @@ class Individual:
     def __del__(self):
         Individual.mycount -= 1
 
-
-
-
 #########################################################################################################
 #
 # Class Population:
 #
 #########################################################################################################
 class Population:
-    def __init__(self, nrofindividuals):
+    def __init__(self, nrofindividuals=0):
+        self.min=-1
+        self.max=-1
+        self.bestIndividual=Gen(setValue="NotDefined" )
+        self.P1=None
+        self.P2=None
+        self.ParentTracking = 0
         self.generation=0
         self.solved=False
         self.nrOfIndividuals = nrofindividuals
         self.nextGeneration = []
         self.individuals = []
-        self.individuals = [Gen() for i in xrange(nrofindividuals)]
-        print "setting up initial population..."
 
+        #self.generateRandomPopulation()
+
+    def generateRandomPopulation(self):
+        print self
+        self.individuals = []
+        #print "hej",self.nrOfIndividuals
+        if self.nrOfIndividuals > 0:
+            self.individuals = [Gen() for i in xrange(self.nrOfIndividuals)]
+            print "setting up random population..."
+        else:
+            print "setting up random population of 0!, WARNING"
     def __repr__(self):
         return "".join("<" + str(i) + "> " for i in self.individuals)
 
@@ -101,22 +109,51 @@ class Population:
         self.nextGeneration = None
 
 
-    def getAnsastors(self,aGen,tStartHistory=""):
-        tStartHistory= tStartHistory+"{"+str(aGen)+" "
-        if aGen.P1 == None:
-            tP1="[P1: DEVINE]"
-        else:
-            tP1=self.getAnsastors(aGen.P1,"[P1")+"]"
-        if aGen.P2 == None:
-            tP2="[P2: DEVINE]"
-        else:
-            tP2=self.getAnsastors(aGen.P2,"[P2:")+"]"
 
-        tRet=tP1+tP2+"}"
-        return tStartHistory+tRet
+    def fitness(self,printPop=False):
+        t="Generation: {} Min: {} Max: {} Best Ind: {}, P1: {} P2 {}, Mutation: {} GenCount:{}".format(self.generation,self.min,self.max,self.bestIndividual,self.bestIndividual.P1, self.bestIndividual.P2, self.bestIndividual.meMutated, Gen.mycount)
+        if printPop:
+            t=t+"\n"
+            t=t+"Generation: {} Pop: {}".format(self.generation,self.individuals)
+        return t
 
-    def fitness(self):
-        return  "Generation:{} Min: {} Max: {} Best Ind: {}, P1: {} P2 {}, Mutation: {}".format(self.generation,self.min,self.max,self.bestIndividual,self.bestIndividual.P1, self.bestIndividual.P2, self.bestIndividual.meMutated)
+    def printAnsestors(self,_lst):
+        i=0
+        for n in _lst:
+            print i,n
+            print "\n"
+            i+=1
+
+    def Ansastors(self,indi):
+        _lst=[]
+        _n=0
+        _limit=10
+        for i in self.getAnsastors([indi]):
+            if _n>_limit: break
+            #print _n,"=======>",i
+            _lst.append(i)
+            _n=_n+1
+        return _lst
+
+
+
+
+    def getAnsastors(self,nodeList):
+        tList=[]
+        yield nodeList
+
+        for t in nodeList:
+            if t.P1<>None:tList.append(t.P1)
+            if t.P2<>None:tList.append(t.P2)
+
+            #print "newList",tList
+
+        if tList <> []:
+            for n in self.getAnsastors(tList):
+                yield n
+
+
+
 
     #########################################################################################################
     #
@@ -155,19 +192,12 @@ class Population:
     def mutate(self,pop,rate):
         for indi in pop:
             tR=random.random()
-            #print tR
             if (tR < rate):
-                #print indi.body
                 tPos = random.randint(0,len(indi.body)-1)
                 tRan = random.choice(string.digits)
                 indi.body = indi.body[:tPos] + tRan + indi.body[tPos+1:]
                 indi.meMutated=tPos
-                #print "len::", len(indi.body), "["+indi.body+"]"
-                #print "tpos",tPos
-
-                #indi.body[random.randint(0,len(indi.body))]=str(random.choice(string.digits))
-
-
+                indi.fitness=-1
 
     def defineEvolution(self,evolutionMatrix):
         self.evolutionMatrix = evolutionMatrix
@@ -185,19 +215,29 @@ class Population:
         if fromCopy:    oldGeneration = _oldGeneration.__getslice__(0, len(_oldGeneration))
         else:           oldGeneration=_oldGeneration
 
+
         if popsize == -1: popsize=len(oldGeneration)
         oldGeneration.sort(reverse=True)
         for cmdList in self.evolutionMatrix:
             #print cmdList
-            if cmdList[0] == "ClearNextGen":
+            if cmdList[0] == "ParentTracking":
+                self.ParentTracking=cmdList[1]
+            elif cmdList[0] == "ClearNextGen":
                 self.nextGeneration=[]
+                #print "Clear Next Gen"
             elif cmdList[0] == "GetElits":
                 #print len(oldGeneration)*cmdList[1]
                 self.nextGeneration = self.getElites(oldGeneration,[int(len(oldGeneration)*cmdList[1]),cmdList[2]])
+                #print "Got Elits ", self.nextGeneration
                 #print self.nextGeneration
                 #print "sizeNow",len(self.nextGeneration)
             elif cmdList[0] == "GenChildren":
-                _numberOfItems = int(len(oldGeneration)*cmdList[1]/2)
+                _numberOfItems = int(len(oldGeneration)*cmdList[1])
+                if cmdList[1]==1:
+                    #fill rest of list
+                    _numberOfItems = len(oldGeneration) - len(self.nextGeneration)
+                    #print oldGeneration, self.nextGeneration
+                    #print "_numberOfItems: {}".format(_numberOfItems)
                 #print _numberOfItems
                 _crosspoint = cmdList[2]
                 _kids = cmdList[3]
@@ -207,35 +247,17 @@ class Population:
                 _returnNumber = cmdList[7]
 
                 if _function == "GetMates":
-                    for i in range(0,_numberOfItems):
+                    for i in range(0,_numberOfItems,2):
                         newChildren=self.genChildren(self.getMates(oldGeneration),_crosspoint=_crosspoint)
                         for c in newChildren:
                             self.nextGeneration.append(c)
                     #print self.nextGeneration
                     #print "sizeNow",len(self.nextGeneration)
-        exit
-        #                           #No , actionOnSource
-        _elites                 =   [10  , 'keep']           # 'keep'/'remove'
-        _tournamentBreading     = 4
-        _directMutation         = 0
-
-        print "AAAA"
-        #self.nextGeneration=[]
-        #self.nextGeneration =self.getElites(oldGeneration,_elites)
-        #print "Next Generation after Elits",self.nextGeneration
-        #print "Popsize: ", popsize
-
-        #for i in range(len(self.nextGeneration),popsize,2):
-         #   newChildren=(self.genChildren(self.getMates(oldGeneration),_crosspoint=3))
-          #  for c in newChildren:
-           #     #print i, self.nextGeneration
-            #    self.nextGeneration.append(c)
-
-
+            else:
+                 raise NotImplementedError("Command not implemented cmdList:", cmdList)
 
     def genChildren(self, _parents,_crosspoint=-1,_siblings=True):
         p1,p2 = _parents[0], _parents[1]
-
 
         #random crosspoint
         if _crosspoint == -1:
@@ -246,30 +268,25 @@ class Population:
             p1w = (float(p1.fitness) /_totalscore)      # p1w = 30/100 = 0,3
             _crosspoint = int(len(p1.body)*(1-p1w))     # and reverted so 70% is taken from p1 due to more (less if better) "fitness"
 
-            #print p1.fitness, p2.fitness, _totalscore, p1w, _crosspoint
-
-
         c1= Gen( genlen=p1.genlen )
         c2= Gen( genlen=p1.genlen )
-
-        c1.body = p1.body[:3] + p2.body[_crosspoint:]
-        #print c1
+        c1.body = p1.body[:_crosspoint] + p2.body[_crosspoint:]
         _children=[c1]
 
         if _siblings:
-            c2.body = p2.body[:3] + p1.body[_crosspoint:]
+            c2.body = p2.body[:_crosspoint] + p1.body[_crosspoint:]
             _children.append(c2)
 
-        #print "Parents:   ", p1, p2
-        #print "Crossing @:",_crosspoint
-        #print "children:  ", c1, c2
-        for c in _children:
-            c.P1=p1
-            c.P2=p2
-            #print isinstance( c.P2,Gen)
-
+        if self.ParentTracking:
+            for c in _children:
+                #c.P1=p1
+                #c.P2=p2
+                self.trackParents(c,p1,p2)
         return _children
 
+    def trackParents(self,me,p1,p2):
+        me.P1=p1
+        me.P2=p2
 
     def getMates(self,_fromPopulation,allowSelfBread=False):
 
@@ -278,10 +295,11 @@ class Population:
         p2=p1
         _parents =p1
         #print "PARENTS", _parents
-        while p2 == p1:
+        _i =0
+        while (p2 == p1) and (_i < 10): #set max number if test, to prevent endless loop in small populations or with heavy inbreed
             p2=self.getParentFromTournament(_fromPopulation,3,1)
             #print "Parent1,Parent2", p1,p2, "Parents equal:",p1==p2
-
+            _i +=1
         _parents.append(p2[0])
 
         return _parents
@@ -315,9 +333,10 @@ class Population:
         elif _action == 'remove': fromPopulation[:_numberOfElites] = []
         else: raise NameError("recived: {}".format(_action))
         for t in _tmpList:
-            t.P1 = t
-            t.P2 = None
-
+            #t.P1 = None
+            #t.P2 = None
+            self.trackParents(t,t,None)
+        #print _tmpList
         return _tmpList
 
     #########################################################################################################
